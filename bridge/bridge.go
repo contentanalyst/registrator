@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	dockerapi "github.com/fsouza/go-dockerclient"
+	"github.com/contentanalyst/registrator/rancher"
 )
 
 var serviceIDPattern = regexp.MustCompile(`^(.+?):([a-zA-Z0-9][a-zA-Z0-9_.-]+):[0-9]+(?::udp)?$`)
@@ -196,6 +197,10 @@ func (b *Bridge) add(containerId string, quiet bool) {
 	if err != nil {
 		log.Println("unable to inspect container:", containerId[:12], err)
 		return
+	}
+
+	if b.config.Rancher {
+		rancher.GetMetadata()
 	}
 
 	ports := make(map[string]ServicePort)

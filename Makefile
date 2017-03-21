@@ -1,4 +1,4 @@
-NAME=registrator
+NAME=contentanalyst/registrator
 VERSION=$(shell cat VERSION)
 DEV_RUN_OPTS ?= consul:
 
@@ -9,7 +9,7 @@ dev:
 		$(NAME):dev /bin/registrator $(DEV_RUN_OPTS)
 
 build:
-	mkdir -p build
+	mkdir -p build/contentanalyst
 	docker build -t $(NAME):$(VERSION) .
 	docker save $(NAME):$(VERSION) | gzip -9 > build/$(NAME)_$(VERSION).tgz
 
