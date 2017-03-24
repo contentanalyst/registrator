@@ -28,7 +28,7 @@ type Config struct {
 	RefreshInterval int
 	DeregisterCheck string
 	Cleanup         bool
-	Rancher		bool
+	RancherPorts	bool
 }
 
 type Service struct {

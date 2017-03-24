@@ -199,10 +199,6 @@ func (b *Bridge) add(containerId string, quiet bool) {
 		return
 	}
 
-	if b.config.Rancher {
-		rancher.GetMetadata()
-	}
-
 	ports := make(map[string]ServicePort)
 
 	// Extract configured host port mappings, relevant when using --net=host
@@ -214,6 +210,14 @@ func (b *Bridge) add(containerId string, quiet bool) {
 	// Extract runtime port mappings, relevant when using --net=bridge
 	for port, published := range container.NetworkSettings.Ports {
 		ports[string(port)] = servicePort(container, port, published)
+	}
+
+	if b.config.RancherPorts {
+		// Fetch and extract port mappings from Rancher metadata service
+		name := containerName(container)
+		for port, published := range rancher.GetPortMappings(name) {
+			ports[string(port)] = servicePort(container, port, published)
+		}
 	}
 
 	if len(ports) == 0 && !quiet {

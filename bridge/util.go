@@ -129,3 +129,13 @@ func servicePort(container *dockerapi.Container, port dockerapi.Port, published 
 		container:         container,
 	}
 }
+
+func containerName(container *dockerapi.Container) string {
+	firstIndex := strings.Index(container.Name, "-")
+	lastIndex := strings.LastIndex(container.Name, "-")
+	if firstIndex != lastIndex {
+		return container.Name[firstIndex + 1:lastIndex]
+	} else {
+		return container.Name[1:]
+	}
+}

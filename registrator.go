@@ -12,6 +12,7 @@ import (
 	dockerapi "github.com/fsouza/go-dockerclient"
 	"github.com/gliderlabs/pkg/usage"
 	"github.com/contentanalyst/registrator/bridge"
+	"github.com/contentanalyst/registrator/rancher"
 )
 
 var Version string
@@ -29,7 +30,8 @@ var deregister = flag.String("deregister", "always", "Deregister exited services
 var retryAttempts = flag.Int("retry-attempts", 0, "Max retry attempts to establish a connection with the backend. Use -1 for infinite retries")
 var retryInterval = flag.Int("retry-interval", 2000, "Interval (in millisecond) between retry-attempts.")
 var cleanup = flag.Bool("cleanup", false, "Remove dangling services")
-var rancher = flag.Bool("rancher", false, "Rancher environment, use Rancher metadata service.")
+var rancherIp = flag.Bool("rancher-ip", false, "Use Rancher metadata service to set host IP.")
+var rancherPorts = flag.Bool("rancher-ports", false, "Use Rancher metadata service for port mappings.")
 
 func getopt(name, def string) string {
 	if env := os.Getenv(name); env != "" {
@@ -71,6 +73,28 @@ func main() {
 		os.Exit(2)
 	}
 
+	if *rancherIp {
+		timeout := time.After(time.Second * 10)
+		tick := time.Tick(time.Second * 1)
+		wait:
+		for {
+			log.Println("Waiting for Rancher metadata service...")
+			select {
+			case <-tick:
+				ip, err := rancher.GetHostIp()
+				if err != nil {
+					log.Println("Sleeping 1s")
+				} else {
+					log.Println("Rancher metadata service available")
+					*hostIp = ip
+					break wait
+				}
+			case <-timeout:
+				log.Fatalln("Rancher metadata service unavailable")
+			}
+		}
+	}
+
 	if *hostIp != "" {
 		log.Println("Forcing host IP to", *hostIp)
 	}
@@ -106,7 +130,7 @@ func main() {
 		RefreshInterval: *refreshInterval,
 		DeregisterCheck: *deregister,
 		Cleanup:         *cleanup,
-		Rancher:	 *rancher,
+		RancherPorts:	 *rancherPorts,
 	})
 
 	assert(err)
