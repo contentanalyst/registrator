@@ -73,7 +73,8 @@ func main() {
 		os.Exit(2)
 	}
 
-	if *rancherIp {
+	// Wait for Rancher metadata service to be available if have Rancher options
+	if *rancherIp || *rancherPorts {
 		timeout := time.After(time.Second * 10)
 		tick := time.Tick(time.Second * 1)
 		wait:
@@ -86,7 +87,10 @@ func main() {
 					log.Println("Sleeping 1s")
 				} else {
 					log.Println("Rancher metadata service available")
-					*hostIp = ip
+					// Set host ip to self agent ip from Rancher metadata service
+					if *rancherIp {
+						*hostIp = ip
+					}
 					break wait
 				}
 			case <-timeout:

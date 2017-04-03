@@ -12,29 +12,31 @@ import (
 	dockerapi "github.com/fsouza/go-dockerclient"
 )
 
+// BaseUrl - Rancher metadata service base url with API version
 const BaseUrl = "http://rancher-metadata/2016-07-29"
 
+// GetPortMappings - Get port mappings for a container from Rancher metadata service
 func GetPortMappings(name string) map[dockerapi.Port][]dockerapi.PortBinding {
 	portMappings := make(map[dockerapi.Port][]dockerapi.PortBinding)
 	url := BaseUrl + "/containers/" + name + "/ports"
 	httpClient := &http.Client{Timeout: time.Second * 2}
 	req, err := http.NewRequest( "GET", url , nil)
 	if err != nil {
-		log.Println("Error: ", err)
+		log.Println("rancher metadata error: ", err)
 		return portMappings
 	}
 	req.Header.Add("Accept", "application/json")
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		log.Println("Error: ", err)
+		log.Println("rancher metadata error: ", err)
 		return portMappings
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
+	if resp.StatusCode != 200 {
 		var ports []string
 		err := json.NewDecoder(resp.Body).Decode(&ports)
 		if err != nil {
-			log.Println("Error: ", err)
+			log.Println("rancher metadata error: ", err)
 			return portMappings
 		}
 		for _, p := range ports {
@@ -48,6 +50,7 @@ func GetPortMappings(name string) map[dockerapi.Port][]dockerapi.PortBinding {
 	return portMappings
 }
 
+// GetHostIp - Get host's IP from Rancher metadata service
 func GetHostIp() (string, error) {
 	var ip string
 	url := BaseUrl + "/self/host/agent_ip"
