@@ -22,13 +22,13 @@ func GetPortMappings(name string) map[dockerapi.Port][]dockerapi.PortBinding {
 	httpClient := &http.Client{Timeout: time.Second * 2}
 	req, err := http.NewRequest( "GET", url , nil)
 	if err != nil {
-		log.Println("rancher metadata error: ", err)
+		log.Println("Error building get ports request for Rancher metadata service: ", err)
 		return portMappings
 	}
 	req.Header.Add("Accept", "application/json")
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		log.Println("rancher metadata error: ", err)
+		log.Println("Error requesting ports from Rancher metadata service: ", err)
 		return portMappings
 	}
 	defer resp.Body.Close()
@@ -36,7 +36,12 @@ func GetPortMappings(name string) map[dockerapi.Port][]dockerapi.PortBinding {
 		var ports []string
 		err := json.NewDecoder(resp.Body).Decode(&ports)
 		if err != nil {
-			log.Println("rancher metadata error: ", err)
+			bodyText, rerr := ioutil.ReadAll(resp.Body)
+			if rerr != nil {
+				log.Println("Error reading ports response from Rancher metadata service: ", rerr)
+			} else if string(bodyText) != "" {
+				log.Println("Error unmarshalling ports json from Rancher metadata service: ", err)
+			}
 			return portMappings
 		}
 		for _, p := range ports {
