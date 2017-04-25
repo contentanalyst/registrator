@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 	"os"
-	"github.com/gliderlabs/registrator/bridge"
+	"github.com/contentanalyst/registrator/bridge"
 	consulapi "github.com/hashicorp/consul/api"
 	"github.com/hashicorp/go-cleanhttp"
 )

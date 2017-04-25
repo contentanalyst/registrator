@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	dockerapi "github.com/fsouza/go-dockerclient"
+	"github.com/contentanalyst/registrator/rancher"
 )
 
 var serviceIDPattern = regexp.MustCompile(`^(.+?):([a-zA-Z0-9][a-zA-Z0-9_.-]+):[0-9]+(?::udp)?$`)
@@ -209,6 +210,14 @@ func (b *Bridge) add(containerId string, quiet bool) {
 	// Extract runtime port mappings, relevant when using --net=bridge
 	for port, published := range container.NetworkSettings.Ports {
 		ports[string(port)] = servicePort(container, port, published)
+	}
+
+	if b.config.RancherPorts {
+		// Fetch and extract port mappings from Rancher metadata service
+		name := containerName(container)
+		for port, published := range rancher.GetPortMappings(name) {
+			ports[string(port)] = servicePort(container, port, published)
+		}
 	}
 
 	if len(ports) == 0 && !quiet {
