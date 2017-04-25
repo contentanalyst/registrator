@@ -33,24 +33,21 @@ func GetPortMappings(name string) map[dockerapi.Port][]dockerapi.PortBinding {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		var ports []string
-		err := json.NewDecoder(resp.Body).Decode(&ports)
-		if err != nil {
-			bodyText, rerr := ioutil.ReadAll(resp.Body)
-			if rerr != nil {
-				log.Println("Error reading ports response from Rancher metadata service: ", rerr)
-			} else if string(bodyText) != "" {
-				log.Println("Error unmarshalling ports json from Rancher metadata service: ", err)
-			}
-			return portMappings
-		}
-		for _, p := range ports {
-			// expected string format "<host ip>:<host port>:<port (number/protocol)>"
-			sections := strings.Split(string(p), ":")
-			port := sections[2]
-			published := []dockerapi.PortBinding{ {sections[0], sections[1]}, }
-			portMappings[dockerapi.Port(port)] = published
-		}
+		log.Println("Unexpected status code from requesting ports: ", resp.StatusCode)
+		return portMappings
+	}
+	var ports []string
+	derr := json.NewDecoder(resp.Body).Decode(&ports)
+	if derr != nil {
+		log.Println("Error unmarshalling ports json from Rancher metadata service: ", derr)
+		return portMappings
+	}
+	for _, p := range ports {
+		// expected string format "<host ip>:<host port>:<port (number/protocol)>"
+		sections := strings.Split(string(p), ":")
+		port := sections[2]
+		published := []dockerapi.PortBinding{ {sections[0], sections[1]}, }
+		portMappings[dockerapi.Port(port)] = published
 	}
 	return portMappings
 }
